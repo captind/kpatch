@@ -1,27 +1,24 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    
-	"Description"              : "KPatch VPC Resource Preresquisites",
-    
-	"Parameters"               : {
+    "Description"              : "KPatch VPC Resource Preresquisites",
+    "Parameters"               : {
         "S3BucketSeed" : {
             "Description" : "Customer Identifier for S3 Bucket Creation",
             "Type"        : "String",
             "ConstraintDescription" : "Must be a valid for an S3 Bucket name"
         },
-		"S3Prefix" : {
+        "S3Prefix"     : {
             "Description" : "The S3 Bucket to Deliver SSM Outputs to",
             "Type"        : "String",
-			"Default"     : "kpatchssm",
+            "Default"     : "kpatchssm",
             "ConstraintDescription" : "Must be a valid S3 Prefix in the provided S3 Bucket"
         }
     },
-    
-	"Resources"                : {
-        "KPatchSNSTopic"		: {
+    "Resources"                : {
+        "KPatchSNSTopic" : {
             "Type" : "AWS::SNS::Topic",
             "Properties" : {
-				"TopicName" : "KPatch",
+                "TopicName" : "KPatch",
                 "Subscription" : [
                     {
                         "Endpoint" : {
@@ -31,113 +28,166 @@
                             ]
                         },
                         "Protocol" : "sqs"
-						
                     }
                 ]
             }
         },
-		"KPatchSNSTopicPolicy"		:{
-			  "Type":"AWS::SNS::TopicPolicy",
-			  "Properties":{        
-				"PolicyDocument":{
-				  "Version":"2012-10-17",
-				  "Id":"KPatchTopicPolicy",
-				  "Statement":[
-					{
-					  "Sid":"Allow-SendMessage-To-SNS-Topic-From-S3",
-				  "Effect":"Allow",           
-				  "Principal":"*",
- 				  "Action":["sns:Publish"],
-				  "Resource":{"Ref":"KPatchSNSTopic"},
-					  "Condition":{
-						"ArnEquals":{
-						  "aws:SourceArn":{"Fn::Join": [
+        "KPatchSNSTopicPolicy" : {
+            "Type" : "AWS::SNS::TopicPolicy",
+            "Properties" : {
+                "PolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Id"      : "KPatchTopicPolicy",
+                    "Statement" : [
+                        {
+                            "Sid" : "Allow-SendMessage-To-SNS-Topic-From-S3",
+                            "Effect" : "Allow",
+                            "Principal" : "*",
+                            "Action"    : [
+                                "sns:Publish"
+                            ],
+                            "Resource"  : {
+                                "Ref" : "KPatchSNSTopic"
+                            },
+                            "Condition" : {
+                                "ArnEquals" : {
+                                    "aws:SourceArn" : {
+                                        "Fn::Join" : [
                                             "",
                                             [
                                                 "arn:aws:s3:*:*:",
                                                 {
-                                                    "Fn::Join": ["", [{"Ref":"S3BucketSeed"}, "kpatch" ]]
+                                                    "Fn::Join" : [
+                                                        "",
+                                                        [
+                                                            {
+                                                                "Ref" : "S3BucketSeed"
+                                                            },
+                                                            "kpatch"
+                                                        ]
+                                                    ]
                                                 }
                                             ]
-                                        ]}
-						}
-					  }
-					}
-				  ]
-				},
-				"Topics":[{"Ref":"KPatchSNSTopic"}]
-			  }
-			},
-		"KPatchQueue"			:{
-            "Type":"AWS::SQS::Queue",
-			"Properties" : {
-			   "QueueName" : "KPatch"
-			}
-		},
-		"KPatchQueuePolicy"		:{
-			  "Type":"AWS::SQS::QueuePolicy",
-			  "Properties":{        
-				"PolicyDocument":{
-				  "Version":"2012-10-17",
-				  "Id":"KPatchQueuePolicy",
-				  "Statement":[
-					{
-					  "Sid":"Allow-SendMessage-To-Queues-From-SNS-Topic",
-				  "Effect":"Allow",           
-				  "Principal":"*",
- 				  "Action":["sqs:SendMessage"],
-				  "Resource":"*",
-					  "Condition":{
-						"ArnEquals":{
-						  "aws:SourceArn":{"Ref":"KPatchSNSTopic"}
-						}
-					  }
-					}
-				  ]
-				},
-				"Queues":[{"Ref":"KPatchQueue"}]
-			  }
-			},
-		"KPatchS3Bucket": {
-            "Type": "AWS::S3::Bucket",
-			"DependsOn": "KPatchSNSTopicPolicy",
-            "Properties": {
-				"BucketName" : {
-				"Fn::Join": ["", [{"Ref":"S3BucketSeed"}, "kpatch" ]]
-				},
-                "AccessControl": "BucketOwnerFullControl",
-                "NotificationConfiguration": {
-                    "TopicConfigurations": [
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Topics"         : [
+                    {
+                        "Ref" : "KPatchSNSTopic"
+                    }
+                ]
+            }
+        },
+        "KPatchQueue"          : {
+            "Type" : "AWS::SQS::Queue",
+            "Properties" : {
+                "QueueName" : "KPatch"
+            }
+        },
+        "KPatchQueuePolicy"    : {
+            "Type" : "AWS::SQS::QueuePolicy",
+            "Properties" : {
+                "PolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Id"      : "KPatchQueuePolicy",
+                    "Statement" : [
+                        {
+                            "Sid" : "Allow-SendMessage-To-Queues-From-SNS-Topic",
+                            "Effect" : "Allow",
+                            "Principal" : "*",
+                            "Action"    : [
+                                "sqs:SendMessage"
+                            ],
+                            "Resource"  : "*",
+                            "Condition" : {
+                                "ArnEquals" : {
+                                    "aws:SourceArn" : {
+                                        "Ref" : "KPatchSNSTopic"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Queues"         : [
+                    {
+                        "Ref" : "KPatchQueue"
+                    }
+                ]
+            }
+        },
+        "KPatchS3Bucket"       : {
+            "Type" : "AWS::S3::Bucket",
+            "DependsOn" : "KPatchSNSTopicPolicy",
+            "Properties" : {
+                "BucketName" : {
+                    "Fn::Join" : [
+                        "",
+                        [
+                            {
+                                "Ref" : "S3BucketSeed"
+                            },
+                            "kpatch"
+                        ]
+                    ]
+                },
+                "AccessControl" : "BucketOwnerFullControl",
+                "NotificationConfiguration" : {
+                    "TopicConfigurations" : [
                         {
                             "Filter" : {
-							  "S3Key" : {
-								"Rules" : [ {"Name" : "prefix", "Value" :"ssm/"}, {"Name" : "Suffix", "Value" : "stdout.txt"}]
-							}
-							},
-							"Topic": {"Ref":"KPatchSNSTopic"},
-                            "Event": "s3:ObjectCreated:Put"
-							
+                                "S3Key" : {
+                                    "Rules" : [
+                                        {
+                                            "Name" : "prefix",
+                                            "Value" : "ssm/"
+                                        },
+                                        {
+                                            "Name" : "Suffix",
+                                            "Value" : "stdout.txt"
+                                        }
+                                    ]
+                                }
+                            },
+                            "Topic"  : {
+                                "Ref" : "KPatchSNSTopic"
+                            },
+                            "Event"  : "s3:ObjectCreated:Put"
                         }
                     ]
                 }
             }
         }
-	},
-
+    },
     "Outputs"                  : {
-		"KPatchSNSTopicTopicARN":{
-		  "Value":{"Ref":"KPatchSNSTopic"}  
-		},
-		"KPatchQueueInfo":{
-		  "Value":{"Fn::Join":[ 
-			" ", 
-			[
-			  "ARN:", 
-			  {"Fn::GetAtt":["KPatchQueue","Arn"]}, 
-			  "URL:", 
-			  {"Ref":"KPatchQueue"}
-			]
-		  ]}  
-		}
+        "KPatchSNSTopicTopicARN" : {
+            "Value" : {
+                "Ref" : "KPatchSNSTopic"
+            }
+        },
+        "KPatchQueueInfo"        : {
+            "Value" : {
+                "Fn::Join" : [
+                    " ",
+                    [
+                        "ARN:",
+                        {
+                            "Fn::GetAtt" : [
+                                "KPatchQueue",
+                                "Arn"
+                            ]
+                        },
+                        "URL:",
+                        {
+                            "Ref" : "KPatchQueue"
+                        }
+                    ]
+                ]
+            }
+        }
     }
 }
