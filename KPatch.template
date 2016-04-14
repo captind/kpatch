@@ -159,25 +159,25 @@
                             "Event"  : "s3:ObjectCreated:Put"
                         },
 						{
-                        "Filter" : {
-                            "S3Key" : {
-                                "Rules" : [
-                                    {
-                                        "Name" : "prefix",
-                                        "Value" : "ssm/"
-                                    },
-                                    {
-                                        "Name" : "Suffix",
-                                        "Value" : "stderr.txt"
-                                    }
-                                ]
-                            }
-                        },
-                        "Topic"  : {
-                            "Ref" : "KPatchSNSTopic"
-                        },
-                        "Event"  : "s3:ObjectCreated:Put"
-                    }
+							"Filter" : {
+								"S3Key" : {
+									"Rules" : [
+										{
+											"Name" : "prefix",
+											"Value" : "ssm/"
+										},
+										{
+											"Name" : "Suffix",
+											"Value" : "stderr.txt"
+										}
+									]
+								}
+							},
+							"Topic"  : {
+								"Ref" : "KPatchSNSTopic"
+							},
+							"Event"  : "s3:ObjectCreated:Put"
+						}
                     ]
                 }
             }
