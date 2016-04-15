@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+require 'thread'
+require 'aws-sdk'
+
+Thread.new do
+  # subscribe for results
+  while true
+    sleep 10
+    puts 'hello'
+    puts '> '
+  end
+end
+
+class Command
+  def self.time
+    Time.now
+  end
+end
+
+while (print '> '; input = gets) do
+  input.chomp!
+  case input
+  when 'time' then puts Command.send('time')
+  when 'quit', 'exit' then break
+  end
+end
